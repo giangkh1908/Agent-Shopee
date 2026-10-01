@@ -32,6 +32,7 @@
       <span class="pill-label">Đang theo dõi</span>
       <span class="pill-value" id="budget">0 SKU</span>
     </div>
+    <button class="btn btn-secondary" id="btnKey" title="Nhập / đổi key Apify">🔑 Apify key</button>
     <span class="last-sync" id="lastScan"></span>
   </div>
 </header>
@@ -183,6 +184,32 @@ Ví dụ: https://shopee.sg/product/34229630/2591950137/"></textarea>
         <span class="spin"></span>
         <span>Gemini 3.8 Flash đang đối chiếu sản phẩm 2 bên & phân tích chiến thuật...</span>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Apify key -->
+<div class="modal" id="keyModal">
+  <div class="modal-backdrop" id="keyModalBackdrop"></div>
+  <div class="modal-dialog" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div class="copilot-avatar">🔑</div>
+        <div>
+          <h3>Key Apify</h3>
+          <span class="modal-subtitle" id="keyCurrent"></span>
+        </div>
+      </div>
+      <button class="modal-close" id="btnKeyClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="keyNotice" class="key-notice" hidden></div>
+      <input id="keyInput" class="key-input" type="password" autocomplete="off" placeholder="apify_api_..." />
+      <div style="display:flex; gap:8px; align-items:center">
+        <button class="btn btn-primary" id="btnKeySave">Áp dụng</button>
+        <span id="keyStatus" class="status-msg"></span>
+      </div>
+      <p class="subtitle">Lấy key tại Apify → Settings → API &amp; Integrations. Key được kiểm tra rồi lưu vào database, có hiệu lực ngay cho lần quét sau.</p>
     </div>
   </div>
 </div>

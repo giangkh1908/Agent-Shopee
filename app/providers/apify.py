@@ -12,6 +12,7 @@ from typing import Any
 
 import httpx
 
+from .. import db
 from ..config import APIFY_ACTOR_ID, APIFY_BASE, APIFY_TOKEN
 
 RUN_TIMEOUT_SECS = 900
@@ -23,14 +24,42 @@ class ProviderError(RuntimeError):
     pass
 
 
+class ProviderLimitError(ProviderError):
+    """Actor từ chối chạy vì hết lượt miễn phí — user cần nhập key Apify khác."""
+
+
+def current_token() -> str:
+    """Key nhập từ web (lưu DB) ưu tiên hơn APIFY_TOKEN trong .env; đổi có hiệu lực ngay, không cần restart."""
+    return (db.get_setting("apify_token") or APIFY_TOKEN or "").strip()
+
+
+def verify_token(token: str) -> str:
+    """Trả username Apify nếu key hợp lệ, ngược lại ProviderError."""
+    try:
+        r = httpx.get(f"{APIFY_BASE}/users/me", headers={"Authorization": f"Bearer {token}"}, timeout=30)
+    except httpx.HTTPError as exc:
+        raise ProviderError(f"Không kết nối được Apify: {exc}") from exc
+    if r.status_code != 200:
+        raise ProviderError("Key Apify không hợp lệ")
+    return (r.json().get("data") or {}).get("username", "")
+
+
 def _headers() -> dict[str, str]:
-    return {"Authorization": f"Bearer {APIFY_TOKEN}"}
+    return {"Authorization": f"Bearer {current_token()}"}
+
+
+def _limit_reached(run_id: str) -> bool:
+    try:
+        log = httpx.get(f"{APIFY_BASE}/actor-runs/{run_id}/log", headers=_headers(), timeout=30).text
+    except httpx.HTTPError:
+        return False
+    return "limit reached" in log.lower()
 
 
 def fetch_items(urls: list[str], *, timeout: int = RUN_TIMEOUT_SECS) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Chạy actor, trả (items, meta có run_id/chi phí thật)."""
-    if not APIFY_TOKEN:
-        raise ProviderError("Thiếu APIFY_TOKEN trong .env")
+    if not current_token():
+        raise ProviderLimitError("Chưa có key Apify — bấm 🔑 Apify key để nhập")
     if not urls:
         return [], {"url_count": 0}
 
@@ -97,6 +126,9 @@ def fetch_items(urls: list[str], *, timeout: int = RUN_TIMEOUT_SECS) -> tuple[li
 
     if not isinstance(items, list):
         raise ProviderError(f"Dataset trả về {type(items).__name__}, cần list")
+
+    if not items and _limit_reached(run_id):
+        raise ProviderLimitError("Key Apify này đã hết lượt miễn phí của actor (Free tier limit reached) — nhập key khác")
 
     meta = {
         "actor": APIFY_ACTOR_ID,

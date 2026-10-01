@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import db, normalize, parsing
-from .config import APIFY_ACTOR_ID, APIFY_TOKEN, APP_PASSWORD, APP_USER, WEB_DIR
+from .config import APIFY_ACTOR_ID, APP_PASSWORD, APP_USER, WEB_DIR
 from .providers import apify
 
 log = logging.getLogger("agent_shopee")
@@ -52,6 +52,16 @@ class ScanRequest(BaseModel):
     urls: list[str] | None = None
 
 
+class ApifyKeyRequest(BaseModel):
+    token: str = Field(min_length=10, max_length=200)
+
+
+def _provider_http_error(exc: Exception, prefix: str = "") -> HTTPException:
+    # 402 = cần user nhập/đổi key Apify; UI bắt mã này để mở hộp thoại nhập key.
+    status = 402 if isinstance(exc, apify.ProviderLimitError) else 502
+    return HTTPException(status_code=status, detail=f"{prefix}{exc}")
+
+
 class UpdateMyPriceRequest(BaseModel):
     my_price: float | None = None
     my_cost: float | None = None
@@ -80,7 +90,7 @@ def _scan_targets(targets: list[dict[str, Any]], kind: str) -> dict[str, Any]:
         items, provider_meta = apify.fetch_items([str(t["url"]) for t in targets])
     except apify.ProviderError as exc:
         db.finish_run(run_id, ok=0, failed=len(targets), status="failed", error=str(exc))
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        raise _provider_http_error(exc) from exc
 
     for item in items:
         item_id = item.get("itemId")
@@ -134,10 +144,27 @@ def health() -> dict[str, Any]:
     return {
         "ok": True,
         "provider": APIFY_ACTOR_ID,
-        "token_set": bool(APIFY_TOKEN),
+        "token_set": bool(apify.current_token()),
         "items": len(db.list_items()),
         "snapshots": db.snapshot_count(),
     }
+
+
+@app.get("/api/settings/apify")
+def get_apify_key() -> dict[str, Any]:
+    token = apify.current_token()
+    return {"set": bool(token), "hint": f"…{token[-4:]}" if token else None}
+
+
+@app.post("/api/settings/apify")
+def set_apify_key(req: ApifyKeyRequest) -> dict[str, Any]:
+    token = req.token.strip()
+    try:
+        username = apify.verify_token(token)
+    except apify.ProviderError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    db.set_setting("apify_token", token)
+    return {"ok": True, "username": username, "hint": f"…{token[-4:]}"}
 
 
 @app.post("/api/scan")
@@ -234,7 +261,7 @@ def fetch_my_product(item_id: int, req: FetchMyProductRequest) -> dict[str, Any]
     try:
         items, meta = apify.fetch_items([req.my_link])
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Không cào được dữ liệu link của bạn: {exc}")
+        raise _provider_http_error(exc, "Không cào được dữ liệu link của bạn: ")
 
     if not items:
         raise HTTPException(status_code=404, detail="Không tìm thấy thông tin sản phẩm từ link này")

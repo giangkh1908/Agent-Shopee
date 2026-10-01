@@ -7,6 +7,10 @@ export async function api(path, options) {
   const text = await response.text();
   let data;
   try { data = JSON.parse(text); } catch { data = { detail: text }; }
+  if (response.status === 402) {
+    // Hết lượt miễn phí / thiếu key Apify → app.js mở hộp thoại nhập key.
+    window.dispatchEvent(new CustomEvent("apify-key-needed", { detail: data.detail }));
+  }
   if (!response.ok) {
     throw new Error(typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail));
   }

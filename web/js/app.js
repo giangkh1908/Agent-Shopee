@@ -213,6 +213,47 @@ async function scan(text) {
   }
 }
 
+// Apify key: nhập trực tiếp trên web (tự mở khi dính limit)
+async function openKeyModal(notice) {
+  $("keyNotice").hidden = !notice;
+  $("keyNotice").textContent = notice || "";
+  $("keyStatus").textContent = "";
+  $("keyInput").value = "";
+  $("keyModal").classList.add("open");
+  try {
+    const s = await api("/api/settings/apify");
+    $("keyCurrent").textContent = s.set ? `Đang dùng key ${s.hint}` : "Chưa có key";
+  } catch { /* bỏ qua */ }
+  $("keyInput").focus();
+}
+window.addEventListener("apify-key-needed", (e) => openKeyModal(e.detail));
+$("btnKey").onclick = () => openKeyModal();
+$("btnKeyClose").onclick = () => $("keyModal").classList.remove("open");
+$("keyModalBackdrop").onclick = () => $("keyModal").classList.remove("open");
+$("btnKeySave").onclick = async () => {
+  const token = $("keyInput").value.trim();
+  if (!token) return;
+  const btn = $("btnKeySave");
+  btn.disabled = true;
+  $("keyStatus").innerHTML = '<span class="spin"></span> Đang kiểm tra key...';
+  try {
+    const r = await api("/api/settings/apify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    $("keyStatus").textContent = `✅ Đã áp dụng (${r.username})`;
+    $("keyCurrent").textContent = `Đang dùng key ${r.hint}`;
+    $("keyInput").value = "";
+    refresh();
+    setTimeout(() => $("keyModal").classList.remove("open"), 900);
+  } catch (e) {
+    $("keyStatus").innerHTML = `<span style="color:#f87171">✗ ${esc(e.message)}</span>`;
+  } finally {
+    btn.disabled = false;
+  }
+};
+
 // Modal closing
 $("btnAiModalClose").onclick = () => $("aiModal").classList.remove("open");
 $("aiModalBackdrop").onclick = () => $("aiModal").classList.remove("open");

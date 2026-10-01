@@ -73,6 +73,11 @@ CREATE TABLE IF NOT EXISTS snapshots (
   raw                TEXT
 );
 
+CREATE TABLE IF NOT EXISTS settings (
+  key   TEXT PRIMARY KEY,
+  value TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_snap_item_time ON snapshots(item_id, captured_at DESC);
 
 CREATE TABLE IF NOT EXISTS runs (
@@ -365,6 +370,24 @@ def list_items() -> list[dict[str, Any]]:
 def snapshot_count() -> int:
     with db() as conn:
         return int(conn.execute("SELECT COUNT(*) AS n FROM snapshots").fetchone()["n"])
+
+
+def get_setting(key: str) -> str | None:
+    with db() as conn:
+        row = conn.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
+    return row["value"] if row else None
+
+
+def set_setting(key: str, value: str | None) -> None:
+    with db() as conn:
+        if value is None:
+            conn.execute("DELETE FROM settings WHERE key=?", (key,))
+        else:
+            conn.execute(
+                "INSERT INTO settings (key, value) VALUES (?, ?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (key, value),
+            )
 
 
 def recent_runs(limit: int = 20) -> list[dict[str, Any]]:

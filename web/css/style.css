@@ -920,3 +920,22 @@ body {
   padding: 30px;
   color: var(--text-dim);
 }
+
+/* Apify key modal */
+.key-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: #131720;
+  border: 1px solid #283142;
+  border-radius: 8px;
+  color: #fff;
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+}
+.key-notice {
+  background: #451a1a;
+  color: #fca5a5;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
