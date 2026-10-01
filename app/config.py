@@ -34,7 +34,9 @@ AI_BASE_URL = os.environ.get("AI_BASE_URL", "https://api.commandcode.ai/provider
 APP_USER = os.environ.get("APP_USER", "admin")
 APP_PASSWORD = os.environ.get("APP_PASSWORD", "").strip()
 
-DB_PATH =Path(os.environ.get("AGENT_SHOPEE_DB", ROOT / "data" / "agent_shopee.db"))
+# Có PG_DSN (vd Neon) thì dùng Postgres, không thì SQLite local.
+PG_DSN = os.environ.get("PG_DSN", "").strip()
+DB_PATH = Path(os.environ.get("AGENT_SHOPEE_DB", ROOT / "data" / "agent_shopee.db"))
 WEB_DIR = ROOT / "web"
 
 MONTHLY_PROVIDER_BUDGET_USD = float(os.environ.get("MONTHLY_PROVIDER_BUDGET_USD", "30"))
