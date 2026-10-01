@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: agent-shopee
+    runtime: python
+    plan: starter # disk bền (giữ SQLite) cần gói trả phí; free sẽ mất dữ liệu khi restart/redeploy
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: AGENT_SHOPEE_DB
+        value: /var/data/agent_shopee.db
+      - key: APP_USER
+        value: admin
+      - key: APP_PASSWORD
+        sync: false
+      - key: APIFY_TOKEN
+        sync: false
+      - key: COMMANDCODE_API_KEY
+        sync: false
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1

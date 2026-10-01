@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Shopee Copilot — AI Competitive Pricing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header">
+  <div class="header-left">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div class="logo-text">
+        <span class="logo-title">Shopee Copilot</span>
+        <span class="logo-tag">Gemini 3.8 Flash</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="header-right">
+    <div class="status-indicator">
+      <span class="pulse-dot"></span>
+      <span id="health">Đang đồng bộ...</span>
+    </div>
+    <div class="stat-pill" id="budgetPill">
+      <span class="pill-label">Đang theo dõi</span>
+      <span class="pill-value" id="budget">0 SKU</span>
+    </div>
+    <span class="last-sync" id="lastScan"></span>
+  </div>
+</header>
+
+<main class="app-container">
+
+  <!-- Scanner Input Section -->
+  <section class="card intake-card">
+    <div class="intake-header">
+      <div class="intake-title-group">
+        <div class="icon-bubble">🔗</div>
+        <div>
+          <h2>Quét & Phân Tích Đối Thủ Bằng AI</h2>
+          <p class="subtitle">Dán link sản phẩm đối thủ vào ô dưới để cào giá, voucher, tồn kho. Dán link sản phẩm của shop bạn vào bảng để AI Gemini 3.8 đối chiếu chiến thuật.</p>
+        </div>
+      </div>
+      <div class="intake-actions">
+        <button class="btn btn-secondary" id="btnRefresh" title="Làm mới bảng">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          Làm mới
+        </button>
+        <button class="btn btn-secondary" id="btnRescan" title="Cập nhật toàn bộ giá mới nhất">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          Quét lại tất cả
+        </button>
+        <button class="btn btn-primary" id="btnScan">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Quét Đối Thủ
+        </button>
+      </div>
+    </div>
+
+    <div class="input-wrapper">
+      <textarea id="paste" rows="3" placeholder="Dán link sản phẩm đối thủ vào đây (mỗi dòng 1 link)...
+Ví dụ: https://shopee.sg/product/34229630/2591950137/"></textarea>
+    </div>
+
+    <div class="intake-footer">
+      <div id="scanStatus" class="status-msg"></div>
+      <div class="auto-refresh-toggle">
+        <label class="switch-label">
+          <input type="checkbox" id="chkAuto" />
+          <span class="switch-custom"></span>
+          <span>Tự động làm mới (5 phút)</span>
+        </label>
+      </div>
+    </div>
+    <div id="scanErrors"></div>
+  </section>
+
+  <!-- Metric Badges Overview -->
+  <section class="stats-grid" id="stats"></section>
+
+  <!-- Main Pricing Table -->
+  <section class="card table-card">
+    <div class="table-header">
+      <div class="table-title">
+        <div class="icon-bubble small">📊</div>
+        <div>
+          <h3>So Sánh Giá & Ghép Cặp Sản Phẩm Với Shop Của Bạn</h3>
+          <p class="subtitle">Dán <b>Link shop bạn</b> tương ứng với từng sản phẩm đối thủ → Bấm <b>⚡ AI Phân Tích</b> để Gemini 3.8 Flash cào giá 2 bên và hiến kế.</p>
+        </div>
+      </div>
+      <div class="table-legend">
+        <span class="legend-item"><span class="badge badge-flash">⚡ Flash Sale</span></span>
+        <span class="legend-item"><span class="badge badge-exact">✓ Khớp Card</span></span>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table class="copilot-table">
+        <thead>
+          <tr>
+            <th width="48"></th>
+            <th width="280">Sản phẩm đối thủ</th>
+            <th width="110">Shop</th>
+            <th width="100">Giá gốc</th>
+            <th width="100">Promo</th>
+            <th width="120">Voucher Shop</th>
+            <th width="120">Voucher Sàn</th>
+            <th width="110" class="text-accent">Giá cuối Đ.Thủ</th>
+            <th width="260" class="bg-copilot-header">Link sản phẩm của bạn</th>
+            <th width="130" class="text-center">AI Copilot</th>
+            <th width="80">Tồn</th>
+            <th width="90">Rating</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td colspan="12" class="empty-state">Đang tải dữ liệu sản phẩm...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Runs History Section -->
+  <section class="card runs-card">
+    <div class="runs-header">
+      <div class="icon-bubble small">📜</div>
+      <h4>Lịch Sử Các Đợt Quét</h4>
+    </div>
+    <div class="table-responsive">
+      <table class="runs-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Thời gian</th>
+            <th>Loại quét</th>
+            <th>Link</th>
+            <th>Thành công</th>
+            <th>Thất bại</th>
+            <th>Trạng thái</th>
+            <th>Provider Run ID</th>
+            <th>Chi phí thực ($)</th>
+          </tr>
+        </thead>
+        <tbody id="runs">
+          <tr><td colspan="9" class="empty-state">Chưa có lịch sử.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<!-- Slide Drawer: Product Details & Waterfall -->
+<div class="drawer" id="drawer">
+  <div class="drawer-panel">
+    <button class="drawer-close" id="btnClose" title="Đóng">✕</button>
+    <div id="drawerBody"></div>
+  </div>
+</div>
+
+<!-- Modal: AI Copilot Strategy -->
+<div class="modal" id="aiModal">
+  <div class="modal-backdrop" id="aiModalBackdrop"></div>
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <div class="modal-title-group">
+        <div class="copilot-avatar">✨</div>
+        <div>
+          <h3 id="modalProductName">AI Copilot — Chiến Thuật Định Giá</h3>
+          <span class="modal-subtitle" id="modalProductMeta">Tối ưu chiến lược cạnh tranh</span>
+        </div>
+      </div>
+      <button class="modal-close" id="btnAiModalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalAiBody">
+      <div class="ai-loading">
+        <span class="spin"></span>
+        <span>Gemini 3.8 Flash đang đối chiếu sản phẩm 2 bên & phân tích chiến thuật...</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

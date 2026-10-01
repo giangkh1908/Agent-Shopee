@@ -1,0 +1,32 @@
+# Fixture test — 8 link người dùng cung cấp (2026-09-29).
+# Tất cả cùng shop_id 34229630 = "Ultimate Sup" (Shopee SG). Dùng cho P0 spike + test P1 (§9 trong PLAN.md).
+# Snapshot thật đã lấy được: fixtures/raw/zen_studio_2026-09-29.json (8/8 SKU, 186 field/SKU).
+watchlist:
+  name: mutant-sg-test
+  market: SG
+  cadence: 60m            # khi go-live; P0 spike chạy 1 lần
+  targets:
+    - url: https://shopee.sg/product/34229630/2591950137/
+      shop_id: 34229630
+      item_id: 2591950137
+    - url: https://shopee.sg/product/34229630/21924706357/
+      shop_id: 34229630
+      item_id: 21924706357
+    - url: https://shopee.sg/product/34229630/22743205937/
+      shop_id: 34229630
+      item_id: 22743205937
+    - url: https://shopee.sg/product/34229630/5148755036/
+      shop_id: 34229630
+      item_id: 5148755036
+    - url: https://shopee.sg/Mutant-Mutant-Creatine-100-Pure-Creatine-Monohydrate-Fast-Recovery-Muscle-Growth-300g-60-sers-i.34229630.19623941284
+      shop_id: 34229630
+      item_id: 19623941284
+    - url: https://shopee.sg/product/34229630/6487935366/
+      shop_id: 34229630
+      item_id: 6487935366
+    - url: https://shopee.sg/product/34229630/9037970487/
+      shop_id: 34229630
+      item_id: 9037970487
+    - url: https://shopee.sg/product/34229630/2889378598/
+      shop_id: 34229630
+      item_id: 2889378598
